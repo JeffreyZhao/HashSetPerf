@@ -1,0 +1,4 @@
+.vscode/
+BenchmarkDotNet.Artifacts/
+bin/
+obj/
