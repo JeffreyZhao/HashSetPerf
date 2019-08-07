@@ -5,54 +5,52 @@ using BenchmarkDotNet.Running;
 
 namespace Dict
 {
-    [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
-    [CategoriesColumn]
-    public class HashPerf
+    public abstract class HashSetPerf
     {
-        private readonly Dictionary<string, string> _stringDict = new Dictionary<string, string>();
-        private readonly HashSet<string> _stringSet = new HashSet<string>();
-        private readonly FastHashSet<string> _stringFastSet = new FastHashSet<string>();
+        protected readonly Dictionary<string, string> _stringDict = new Dictionary<string, string>();
+        protected readonly HashSet<string> _stringSet = new HashSet<string>();
+        protected readonly FastHashSet<string> _stringFastSet = new FastHashSet<string>();
         
-        private readonly Dictionary<int, int> _intDict = new Dictionary<int, int>();
-        private readonly HashSet<int> _intSet = new HashSet<int>();
-        private readonly FastHashSet<int> _intFastSet = new FastHashSet<int>();
+        protected readonly Dictionary<int, int> _intDict = new Dictionary<int, int>();
+        protected readonly HashSet<int> _intSet = new HashSet<int>();
+        protected readonly FastHashSet<int> _intFastSet = new FastHashSet<int>();
         
-        private readonly Dictionary<object, object> _objDict = new Dictionary<object, object>();
-        private readonly HashSet<object> _objSet = new HashSet<object>();
-        private readonly FastHashSet<object> _objFastSet = new FastHashSet<object>();
+        protected readonly Dictionary<object, object> _objDict = new Dictionary<object, object>();
+        protected readonly HashSet<object> _objSet = new HashSet<object>();
+        protected readonly FastHashSet<object> _objFastSet = new FastHashSet<object>();
         
-        private readonly Dictionary<object, object> _customDict = new Dictionary<object, object>(CustomEqualityComparer.Instance);
-        private readonly HashSet<object> _customSet = new HashSet<object>(CustomEqualityComparer.Instance);
-        private readonly FastHashSet<object> _customFastSet = new FastHashSet<object>(CustomEqualityComparer.Instance);
+        protected readonly Dictionary<object, object> _customDict = new Dictionary<object, object>(CustomEqualityComparer.Instance);
+        protected readonly HashSet<object> _customSet = new HashSet<object>(CustomEqualityComparer.Instance);
+        protected readonly FastHashSet<object> _customFastSet = new FastHashSet<object>(CustomEqualityComparer.Instance);
         
-        private readonly object _key1 = new object();
-        private readonly object _key2 = new object();
-        private readonly object _key3 = new object();
-        private readonly object _key4 = new object();
-        private readonly object _key5 = new object();
-        private readonly object _key6 = new object();
-        private readonly object _key7 = new object();
-        private readonly object _key8 = new object();
-        private readonly object _key9 = new object();
-        private readonly object _key10 = new object();
-        private readonly object _key11 = new object();
-        private readonly object _key12 = new object();
-        private readonly object _key13 = new object();
-        private readonly object _key14 = new object();
-        private readonly object _key15 = new object();
-        private readonly object _key16 = new object();
-        private readonly object _key17 = new object();
-        private readonly object _key18 = new object();
-        private readonly object _key19 = new object();
-        private readonly object _key20 = new object();
-        private readonly object _key21 = new object();
-        private readonly object _key22 = new object();
-        private readonly object _key23 = new object();
-        private readonly object _key24 = new object();
-        private readonly object _key25 = new object();
-        private readonly object _key26 = new object();
+        protected readonly object _key1 = new object();
+        protected readonly object _key2 = new object();
+        protected readonly object _key3 = new object();
+        protected readonly object _key4 = new object();
+        protected readonly object _key5 = new object();
+        protected readonly object _key6 = new object();
+        protected readonly object _key7 = new object();
+        protected readonly object _key8 = new object();
+        protected readonly object _key9 = new object();
+        protected readonly object _key10 = new object();
+        protected readonly object _key11 = new object();
+        protected readonly object _key12 = new object();
+        protected readonly object _key13 = new object();
+        protected readonly object _key14 = new object();
+        protected readonly object _key15 = new object();
+        protected readonly object _key16 = new object();
+        protected readonly object _key17 = new object();
+        protected readonly object _key18 = new object();
+        protected readonly object _key19 = new object();
+        protected readonly object _key20 = new object();
+        protected readonly object _key21 = new object();
+        protected readonly object _key22 = new object();
+        protected readonly object _key23 = new object();
+        protected readonly object _key24 = new object();
+        protected readonly object _key25 = new object();
+        protected readonly object _key26 = new object();
 
-        public HashPerf()
+        public HashSetPerf()
         {
             var allKeys = new object[]
             {
@@ -86,6 +84,12 @@ namespace Dict
             }
         }
 
+    }
+    
+    [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
+    [CategoriesColumn]
+    public class HashSetPerf_Get : HashSetPerf
+    {
         [BenchmarkCategory("String")]
         [Benchmark(OperationsPerInvoke = 26)]
         public void StringDict()
@@ -471,6 +475,395 @@ namespace Dict
         }
     }
     
+    [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
+    [CategoriesColumn]
+    public class HashSetPerf_Set : HashSetPerf
+    {
+        [BenchmarkCategory("String")]
+        [Benchmark(OperationsPerInvoke = 26)]
+        public void StringDict()
+        {
+            _stringDict["A"] = "A";
+            _stringDict["B"] = "B";
+            _stringDict["C"] = "C";
+            _stringDict["D"] = "D";
+            _stringDict["E"] = "E";
+            _stringDict["F"] = "F";
+            _stringDict["G"] = "G";
+            _stringDict["H"] = "H";
+            _stringDict["I"] = "I";
+            _stringDict["J"] = "J";
+            _stringDict["K"] = "K";
+            _stringDict["L"] = "L";
+            _stringDict["M"] = "M";
+            _stringDict["N"] = "N";
+            _stringDict["O"] = "O";
+            _stringDict["P"] = "P";
+            _stringDict["Q"] = "Q";
+            _stringDict["R"] = "R";
+            _stringDict["S"] = "S";
+            _stringDict["T"] = "T";
+            _stringDict["U"] = "U";
+            _stringDict["V"] = "V";
+            _stringDict["W"] = "W";
+            _stringDict["X"] = "X";
+            _stringDict["Y"] = "Y";
+            _stringDict["Z"] = "Z";
+        }
+        
+        [BenchmarkCategory("String")]
+        [Benchmark(OperationsPerInvoke = 26, Baseline = true)]
+        public void StringSet()
+        {
+            _stringSet.Add("A");
+            _stringSet.Add("B");
+            _stringSet.Add("C");
+            _stringSet.Add("D");
+            _stringSet.Add("E");
+            _stringSet.Add("F");
+            _stringSet.Add("G");
+            _stringSet.Add("H");
+            _stringSet.Add("I");
+            _stringSet.Add("J");
+            _stringSet.Add("K");
+            _stringSet.Add("L");
+            _stringSet.Add("M");
+            _stringSet.Add("N");
+            _stringSet.Add("O");
+            _stringSet.Add("P");
+            _stringSet.Add("Q");
+            _stringSet.Add("R");
+            _stringSet.Add("S");
+            _stringSet.Add("T");
+            _stringSet.Add("U");
+            _stringSet.Add("V");
+            _stringSet.Add("W");
+            _stringSet.Add("X");
+            _stringSet.Add("Y");
+            _stringSet.Add("Z");
+        }
+        
+        [BenchmarkCategory("String")]
+        [Benchmark(OperationsPerInvoke = 26)]
+        public void StringFastSet()
+        {
+            _stringFastSet.Add("A");
+            _stringFastSet.Add("B");
+            _stringFastSet.Add("C");
+            _stringFastSet.Add("D");
+            _stringFastSet.Add("E");
+            _stringFastSet.Add("F");
+            _stringFastSet.Add("G");
+            _stringFastSet.Add("H");
+            _stringFastSet.Add("I");
+            _stringFastSet.Add("J");
+            _stringFastSet.Add("K");
+            _stringFastSet.Add("L");
+            _stringFastSet.Add("M");
+            _stringFastSet.Add("N");
+            _stringFastSet.Add("O");
+            _stringFastSet.Add("P");
+            _stringFastSet.Add("Q");
+            _stringFastSet.Add("R");
+            _stringFastSet.Add("S");
+            _stringFastSet.Add("T");
+            _stringFastSet.Add("U");
+            _stringFastSet.Add("V");
+            _stringFastSet.Add("W");
+            _stringFastSet.Add("X");
+            _stringFastSet.Add("Y");
+            _stringFastSet.Add("Z");
+        }
+        
+        [BenchmarkCategory("Int32")]
+        [Benchmark(OperationsPerInvoke = 26)]
+        public void IntDict()
+        {
+            _intDict[1] = 1;
+            _intDict[2] = 2;
+            _intDict[3] = 3;
+            _intDict[4] = 4;
+            _intDict[5] = 5;
+            _intDict[6] = 6;
+            _intDict[7] = 7;
+            _intDict[8] = 8;
+            _intDict[9] = 9;
+            _intDict[10] = 10;
+            _intDict[11] = 11;
+            _intDict[12] = 12;
+            _intDict[13] = 13;
+            _intDict[14] = 14;
+            _intDict[15] = 15;
+            _intDict[16] = 16;
+            _intDict[17] = 17;
+            _intDict[18] = 18;
+            _intDict[19] = 19;
+            _intDict[20] = 20;
+            _intDict[21] = 21;
+            _intDict[22] = 22;
+            _intDict[23] = 23;
+            _intDict[24] = 24;
+            _intDict[25] = 25;
+            _intDict[26] = 26;
+        }
+
+        [BenchmarkCategory("Int32")]
+        [Benchmark(OperationsPerInvoke = 26, Baseline = true)]
+        public void IntSet()
+        {
+            _intSet.Add(1);
+            _intSet.Add(2);
+            _intSet.Add(3);
+            _intSet.Add(4);
+            _intSet.Add(5);
+            _intSet.Add(6);
+            _intSet.Add(7);
+            _intSet.Add(8);
+            _intSet.Add(9);
+            _intSet.Add(10);
+            _intSet.Add(11);
+            _intSet.Add(12);
+            _intSet.Add(13);
+            _intSet.Add(14);
+            _intSet.Add(15);
+            _intSet.Add(16);
+            _intSet.Add(17);
+            _intSet.Add(18);
+            _intSet.Add(19);
+            _intSet.Add(20);
+            _intSet.Add(21);
+            _intSet.Add(22);
+            _intSet.Add(23);
+            _intSet.Add(24);
+            _intSet.Add(25);
+            _intSet.Add(26);
+        }
+        
+        [BenchmarkCategory("Int32")]
+        [Benchmark(OperationsPerInvoke = 26)]
+        public void IntFastSet()
+        {
+            _intFastSet.Add(1);
+            _intFastSet.Add(2);
+            _intFastSet.Add(3);
+            _intFastSet.Add(4);
+            _intFastSet.Add(5);
+            _intFastSet.Add(6);
+            _intFastSet.Add(7);
+            _intFastSet.Add(8);
+            _intFastSet.Add(9);
+            _intFastSet.Add(10);
+            _intFastSet.Add(11);
+            _intFastSet.Add(12);
+            _intFastSet.Add(13);
+            _intFastSet.Add(14);
+            _intFastSet.Add(15);
+            _intFastSet.Add(16);
+            _intFastSet.Add(17);
+            _intFastSet.Add(18);
+            _intFastSet.Add(19);
+            _intFastSet.Add(20);
+            _intFastSet.Add(21);
+            _intFastSet.Add(22);
+            _intFastSet.Add(23);
+            _intFastSet.Add(24);
+            _intFastSet.Add(25);
+            _intFastSet.Add(26);
+        }
+        
+        [BenchmarkCategory("Object")]
+        [Benchmark(OperationsPerInvoke = 26)]
+        public void ObjDict()
+        {
+            _objDict[_key1] = _key1;
+            _objDict[_key2] = _key2;
+            _objDict[_key3] = _key3;
+            _objDict[_key4] = _key4;
+            _objDict[_key5] = _key5;
+            _objDict[_key6] = _key6;
+            _objDict[_key7] = _key7;
+            _objDict[_key8] = _key8;
+            _objDict[_key9] = _key9;
+            _objDict[_key10] = _key10;
+            _objDict[_key11] = _key11;
+            _objDict[_key12] = _key12;
+            _objDict[_key13] = _key13;
+            _objDict[_key14] = _key14;
+            _objDict[_key15] = _key15;
+            _objDict[_key16] = _key16;
+            _objDict[_key17] = _key17;
+            _objDict[_key18] = _key18;
+            _objDict[_key19] = _key19;
+            _objDict[_key20] = _key20;
+            _objDict[_key21] = _key21;
+            _objDict[_key22] = _key22;
+            _objDict[_key23] = _key23;
+            _objDict[_key24] = _key24;
+            _objDict[_key25] = _key25;
+            _objDict[_key26] = _key26;
+        }
+        
+        [BenchmarkCategory("Object")]
+        [Benchmark(OperationsPerInvoke = 26, Baseline = true)]
+        public void ObjSet()
+        {
+            _objSet.Add(_key1);
+            _objSet.Add(_key2);
+            _objSet.Add(_key3);
+            _objSet.Add(_key4);
+            _objSet.Add(_key5);
+            _objSet.Add(_key6);
+            _objSet.Add(_key7);
+            _objSet.Add(_key8);
+            _objSet.Add(_key9);
+            _objSet.Add(_key10);
+            _objSet.Add(_key11);
+            _objSet.Add(_key12);
+            _objSet.Add(_key13);
+            _objSet.Add(_key14);
+            _objSet.Add(_key15);
+            _objSet.Add(_key16);
+            _objSet.Add(_key17);
+            _objSet.Add(_key18);
+            _objSet.Add(_key19);
+            _objSet.Add(_key20);
+            _objSet.Add(_key21);
+            _objSet.Add(_key22);
+            _objSet.Add(_key23);
+            _objSet.Add(_key24);
+            _objSet.Add(_key25);
+            _objSet.Add(_key26);
+        }
+        
+        [BenchmarkCategory("Object")]
+        [Benchmark(OperationsPerInvoke = 26)]
+        public void ObjFastSet()
+        {
+            _objFastSet.Add(_key1);
+            _objFastSet.Add(_key2);
+            _objFastSet.Add(_key3);
+            _objFastSet.Add(_key4);
+            _objFastSet.Add(_key5);
+            _objFastSet.Add(_key6);
+            _objFastSet.Add(_key7);
+            _objFastSet.Add(_key8);
+            _objFastSet.Add(_key9);
+            _objFastSet.Add(_key10);
+            _objFastSet.Add(_key11);
+            _objFastSet.Add(_key12);
+            _objFastSet.Add(_key13);
+            _objFastSet.Add(_key14);
+            _objFastSet.Add(_key15);
+            _objFastSet.Add(_key16);
+            _objFastSet.Add(_key17);
+            _objFastSet.Add(_key18);
+            _objFastSet.Add(_key19);
+            _objFastSet.Add(_key20);
+            _objFastSet.Add(_key21);
+            _objFastSet.Add(_key22);
+            _objFastSet.Add(_key23);
+            _objFastSet.Add(_key24);
+            _objFastSet.Add(_key25);
+            _objFastSet.Add(_key26);
+        }
+        
+        [BenchmarkCategory("Custom")]
+        [Benchmark(OperationsPerInvoke = 26)]
+        public void CustomDict()
+        {
+            _customDict[_key1] = _key1;
+            _customDict[_key2] = _key2;
+            _customDict[_key3] = _key3;
+            _customDict[_key4] = _key4;
+            _customDict[_key5] = _key5;
+            _customDict[_key6] = _key6;
+            _customDict[_key7] = _key7;
+            _customDict[_key8] = _key8;
+            _customDict[_key9] = _key9;
+            _customDict[_key10] = _key10;
+            _customDict[_key11] = _key11;
+            _customDict[_key12] = _key12;
+            _customDict[_key13] = _key13;
+            _customDict[_key14] = _key14;
+            _customDict[_key15] = _key15;
+            _customDict[_key16] = _key16;
+            _customDict[_key17] = _key17;
+            _customDict[_key18] = _key18;
+            _customDict[_key19] = _key19;
+            _customDict[_key20] = _key20;
+            _customDict[_key21] = _key21;
+            _customDict[_key22] = _key22;
+            _customDict[_key23] = _key23;
+            _customDict[_key24] = _key24;
+            _customDict[_key25] = _key25;
+            _customDict[_key26] = _key26;
+        }
+        
+        [BenchmarkCategory("Custom")]
+        [Benchmark(OperationsPerInvoke = 26, Baseline = true)]
+        public void CustomSet()
+        {
+            _customSet.Add(_key1);
+            _customSet.Add(_key2);
+            _customSet.Add(_key3);
+            _customSet.Add(_key4);
+            _customSet.Add(_key5);
+            _customSet.Add(_key6);
+            _customSet.Add(_key7);
+            _customSet.Add(_key8);
+            _customSet.Add(_key9);
+            _customSet.Add(_key10);
+            _customSet.Add(_key11);
+            _customSet.Add(_key12);
+            _customSet.Add(_key13);
+            _customSet.Add(_key14);
+            _customSet.Add(_key15);
+            _customSet.Add(_key16);
+            _customSet.Add(_key17);
+            _customSet.Add(_key18);
+            _customSet.Add(_key19);
+            _customSet.Add(_key20);
+            _customSet.Add(_key21);
+            _customSet.Add(_key22);
+            _customSet.Add(_key23);
+            _customSet.Add(_key24);
+            _customSet.Add(_key25);
+            _customSet.Add(_key26);
+        }
+        
+        [BenchmarkCategory("Custom")]
+        [Benchmark(OperationsPerInvoke = 26)]
+        public void CustomFastSet()
+        {
+            _customFastSet.Add(_key1);
+            _customFastSet.Add(_key2);
+            _customFastSet.Add(_key3);
+            _customFastSet.Add(_key4);
+            _customFastSet.Add(_key5);
+            _customFastSet.Add(_key6);
+            _customFastSet.Add(_key7);
+            _customFastSet.Add(_key8);
+            _customFastSet.Add(_key9);
+            _customFastSet.Add(_key10);
+            _customFastSet.Add(_key11);
+            _customFastSet.Add(_key12);
+            _customFastSet.Add(_key13);
+            _customFastSet.Add(_key14);
+            _customFastSet.Add(_key15);
+            _customFastSet.Add(_key16);
+            _customFastSet.Add(_key17);
+            _customFastSet.Add(_key18);
+            _customFastSet.Add(_key19);
+            _customFastSet.Add(_key20);
+            _customFastSet.Add(_key21);
+            _customFastSet.Add(_key22);
+            _customFastSet.Add(_key23);
+            _customFastSet.Add(_key24);
+            _customFastSet.Add(_key25);
+            _customFastSet.Add(_key26);
+        }
+    }
+    
     public class CustomEqualityComparer : EqualityComparer<object>
     {
         public static readonly CustomEqualityComparer Instance = new CustomEqualityComparer();
@@ -490,7 +883,7 @@ namespace Dict
     {
         public static void Main(string[] args)
         {
-            BenchmarkRunner.Run<HashPerf>();
+            BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
         }
     }
 }
