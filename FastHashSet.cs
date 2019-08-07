@@ -272,7 +272,7 @@ namespace System.Collections.Generic
                     if (default(T)! != null) // TODO-NULLABLE: default(T) == null warning (https://github.com/dotnet/roslyn/issues/34757)
                     {
                         // see note at "HashSet" level describing why "- 1" appears in for loop
-                        for (int i = _buckets[hashCode % _buckets.Length] - 1; i >= 0; i = slots[i].next)
+                        for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
                         {
                             if (slots[i].hashCode == hashCode && EqualityComparer<T>.Default.Equals(slots[i].value, item))
                             {
@@ -295,7 +295,7 @@ namespace System.Collections.Generic
                         // EqualityComparer<TKey> defaultComparer = EqualityComparer<TKey>.Default;
                         
                         // see note at "HashSet" level describing why "- 1" appears in for loop
-                        for (int i = _buckets[hashCode % _buckets.Length] - 1; i >= 0; i = slots[i].next)
+                        for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
                         {
                             if (slots[i].hashCode == hashCode && defaultComparer.Equals(slots[i].value, item))
                             {
@@ -315,7 +315,7 @@ namespace System.Collections.Generic
                 {
                     int hashCode = item == null ? 0 : InternalGetHashCode(comparer.GetHashCode(item));
                     // see note at "HashSet" level describing why "- 1" appears in for loop
-                    for (int i = _buckets[hashCode % _buckets.Length] - 1; i >= 0; i = slots[i].next)
+                    for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
                     {
                         if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, item))
                         {
