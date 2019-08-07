@@ -15,44 +15,44 @@ namespace Dict
         protected readonly HashSet<int> _intSet = new HashSet<int>();
         protected readonly FastHashSet<int> _intFastSet = new FastHashSet<int>();
         
-        protected readonly Dictionary<object, object> _objDict = new Dictionary<object, object>();
-        protected readonly HashSet<object> _objSet = new HashSet<object>();
-        protected readonly FastHashSet<object> _objFastSet = new FastHashSet<object>();
+        protected readonly Dictionary<Key, Key> _objDict = new Dictionary<Key, Key>();
+        protected readonly HashSet<Key> _objSet = new HashSet<Key>();
+        protected readonly FastHashSet<Key> _objFastSet = new FastHashSet<Key>();
         
-        protected readonly Dictionary<object, object> _customDict = new Dictionary<object, object>(CustomEqualityComparer.Instance);
-        protected readonly HashSet<object> _customSet = new HashSet<object>(CustomEqualityComparer.Instance);
-        protected readonly FastHashSet<object> _customFastSet = new FastHashSet<object>(CustomEqualityComparer.Instance);
+        protected readonly Dictionary<Key, Key> _customDict = new Dictionary<Key, Key>(KeyEqualityComparer.Instance);
+        protected readonly HashSet<Key> _customSet = new HashSet<Key>(KeyEqualityComparer.Instance);
+        protected readonly FastHashSet<Key> _customFastSet = new FastHashSet<Key>(KeyEqualityComparer.Instance);
         
-        protected readonly object _key1 = new object();
-        protected readonly object _key2 = new object();
-        protected readonly object _key3 = new object();
-        protected readonly object _key4 = new object();
-        protected readonly object _key5 = new object();
-        protected readonly object _key6 = new object();
-        protected readonly object _key7 = new object();
-        protected readonly object _key8 = new object();
-        protected readonly object _key9 = new object();
-        protected readonly object _key10 = new object();
-        protected readonly object _key11 = new object();
-        protected readonly object _key12 = new object();
-        protected readonly object _key13 = new object();
-        protected readonly object _key14 = new object();
-        protected readonly object _key15 = new object();
-        protected readonly object _key16 = new object();
-        protected readonly object _key17 = new object();
-        protected readonly object _key18 = new object();
-        protected readonly object _key19 = new object();
-        protected readonly object _key20 = new object();
-        protected readonly object _key21 = new object();
-        protected readonly object _key22 = new object();
-        protected readonly object _key23 = new object();
-        protected readonly object _key24 = new object();
-        protected readonly object _key25 = new object();
-        protected readonly object _key26 = new object();
+        protected readonly Key _key1 = new Key(1);
+        protected readonly Key _key2 = new Key(2);
+        protected readonly Key _key3 = new Key(3);
+        protected readonly Key _key4 = new Key(4);
+        protected readonly Key _key5 = new Key(5);
+        protected readonly Key _key6 = new Key(6);
+        protected readonly Key _key7 = new Key(7);
+        protected readonly Key _key8 = new Key(8);
+        protected readonly Key _key9 = new Key(9);
+        protected readonly Key _key10 = new Key(10);
+        protected readonly Key _key11 = new Key(11);
+        protected readonly Key _key12 = new Key(12);
+        protected readonly Key _key13 = new Key(13);
+        protected readonly Key _key14 = new Key(14);
+        protected readonly Key _key15 = new Key(15);
+        protected readonly Key _key16 = new Key(16);
+        protected readonly Key _key17 = new Key(17);
+        protected readonly Key _key18 = new Key(18);
+        protected readonly Key _key19 = new Key(19);
+        protected readonly Key _key20 = new Key(20);
+        protected readonly Key _key21 = new Key(21);
+        protected readonly Key _key22 = new Key(22);
+        protected readonly Key _key23 = new Key(23);
+        protected readonly Key _key24 = new Key(24);
+        protected readonly Key _key25 = new Key(25);
+        protected readonly Key _key26 = new Key(26);
 
         public HashSetPerf()
         {
-            var allKeys = new object[]
+            var allKeys = new Key[]
             {
                 _key1, _key2, _key3, _key4, _key5, _key6, _key7,
                 _key8, _key9, _key10, _key11, _key12, _key13, _key14,
@@ -864,18 +864,33 @@ namespace Dict
         }
     }
     
-    public class CustomEqualityComparer : EqualityComparer<object>
+    public class KeyEqualityComparer : EqualityComparer<Key>
     {
-        public static readonly CustomEqualityComparer Instance = new CustomEqualityComparer();
+        public static readonly KeyEqualityComparer Instance = new KeyEqualityComparer();
 
-        public override bool Equals(object x, object y)
+        public override bool Equals(Key x, Key y)
         {
             return x == y;
         }
 
-        public override int GetHashCode(object x)
+        public override int GetHashCode(Key x)
         {
-            return x.GetHashCode();
+            return x.HashCode;
+        }
+    }
+    
+    public class Key
+    {
+        public readonly int HashCode;
+        
+        public Key(int hashCode)
+        {
+            HashCode = hashCode;
+        }
+        
+        public override int GetHashCode()
+        {
+            return HashCode;
         }
     }
 
