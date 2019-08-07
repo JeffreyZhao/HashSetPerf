@@ -5,7 +5,9 @@ using BenchmarkDotNet.Running;
 
 namespace Dict
 {
-    public abstract class HashSetPerf
+    [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
+    [CategoriesColumn]
+    public class HashSetPerf
     {
         protected readonly Dictionary<string, string> _stringDict = new Dictionary<string, string>();
         protected readonly HashSet<string> _stringSet = new HashSet<string>();
@@ -83,16 +85,12 @@ namespace Dict
                 _customFastSet.Add(key);
             }
         }
+        
+        // Get
 
-    }
-    
-    [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
-    [CategoriesColumn]
-    public class HashSetPerf_Get : HashSetPerf
-    {
-        [BenchmarkCategory("String")]
+        [BenchmarkCategory("String", "Get")]
         [Benchmark(OperationsPerInvoke = 26)]
-        public void StringDict()
+        public void Get_StringDict()
         {
             _stringDict.ContainsKey("A");
             _stringDict.ContainsKey("B");
@@ -122,9 +120,9 @@ namespace Dict
             _stringDict.ContainsKey("Z");
         }
         
-        [BenchmarkCategory("String")]
+        [BenchmarkCategory("String", "Get")]
         [Benchmark(OperationsPerInvoke = 26, Baseline = true)]
-        public void StringSet()
+        public void Get_StringSet()
         {
             _stringSet.Contains("A");
             _stringSet.Contains("B");
@@ -154,9 +152,9 @@ namespace Dict
             _stringSet.Contains("Z");
         }
         
-        [BenchmarkCategory("String")]
+        [BenchmarkCategory("String", "Get")]
         [Benchmark(OperationsPerInvoke = 26)]
-        public void StringFastSet()
+        public void Get_StringFastSet()
         {
             _stringFastSet.Contains("A");
             _stringFastSet.Contains("B");
@@ -186,9 +184,9 @@ namespace Dict
             _stringFastSet.Contains("Z");
         }
         
-        [BenchmarkCategory("Int32")]
+        [BenchmarkCategory("Int32", "Get")]
         [Benchmark(OperationsPerInvoke = 26)]
-        public void IntDict()
+        public void Get_IntDict()
         {
             _intDict.ContainsKey(1);
             _intDict.ContainsKey(2);
@@ -218,9 +216,9 @@ namespace Dict
             _intDict.ContainsKey(26);
         }
 
-        [BenchmarkCategory("Int32")]
+        [BenchmarkCategory("Int32", "Get")]
         [Benchmark(OperationsPerInvoke = 26, Baseline = true)]
-        public void IntSet()
+        public void Get_IntSet()
         {
             _intSet.Contains(1);
             _intSet.Contains(2);
@@ -250,9 +248,9 @@ namespace Dict
             _intSet.Contains(26);
         }
         
-        [BenchmarkCategory("Int32")]
+        [BenchmarkCategory("Int32", "Get")]
         [Benchmark(OperationsPerInvoke = 26)]
-        public void IntFastSet()
+        public void Get_IntFastSet()
         {
             _intFastSet.Contains(1);
             _intFastSet.Contains(2);
@@ -282,9 +280,9 @@ namespace Dict
             _intFastSet.Contains(26);
         }
         
-        [BenchmarkCategory("Object")]
+        [BenchmarkCategory("Object", "Get")]
         [Benchmark(OperationsPerInvoke = 26)]
-        public void ObjDict()
+        public void Get_ObjDict()
         {
             _objDict.ContainsKey(_key1);
             _objDict.ContainsKey(_key2);
@@ -314,9 +312,9 @@ namespace Dict
             _objDict.ContainsKey(_key26);
         }
         
-        [BenchmarkCategory("Object")]
+        [BenchmarkCategory("Object", "Get")]
         [Benchmark(OperationsPerInvoke = 26, Baseline = true)]
-        public void ObjSet()
+        public void Get_ObjSet()
         {
             _objSet.Contains(_key1);
             _objSet.Contains(_key2);
@@ -346,9 +344,9 @@ namespace Dict
             _objSet.Contains(_key26);
         }
         
-        [BenchmarkCategory("Object")]
+        [BenchmarkCategory("Object", "Get")]
         [Benchmark(OperationsPerInvoke = 26)]
-        public void ObjFastSet()
+        public void Get_ObjFastSet()
         {
             _objFastSet.Contains(_key1);
             _objFastSet.Contains(_key2);
@@ -378,9 +376,9 @@ namespace Dict
             _objFastSet.Contains(_key26);
         }
         
-        [BenchmarkCategory("Custom")]
+        [BenchmarkCategory("Custom", "Get")]
         [Benchmark(OperationsPerInvoke = 26)]
-        public void CustomDict()
+        public void Get_CustomDict()
         {
             _customDict.ContainsKey(_key1);
             _customDict.ContainsKey(_key2);
@@ -410,9 +408,9 @@ namespace Dict
             _customDict.ContainsKey(_key26);
         }
         
-        [BenchmarkCategory("Custom")]
+        [BenchmarkCategory("Custom", "Get")]
         [Benchmark(OperationsPerInvoke = 26, Baseline = true)]
-        public void CustomSet()
+        public void Get_CustomSet()
         {
             _customSet.Contains(_key1);
             _customSet.Contains(_key2);
@@ -442,9 +440,9 @@ namespace Dict
             _customSet.Contains(_key26);
         }
         
-        [BenchmarkCategory("Custom")]
+        [BenchmarkCategory("Custom", "Get")]
         [Benchmark(OperationsPerInvoke = 26)]
-        public void CustomFastSet()
+        public void Get_CustomFastSet()
         {
             _customFastSet.Contains(_key1);
             _customFastSet.Contains(_key2);
@@ -473,15 +471,12 @@ namespace Dict
             _customFastSet.Contains(_key25);
             _customFastSet.Contains(_key26);
         }
-    }
-    
-    [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
-    [CategoriesColumn]
-    public class HashSetPerf_Set : HashSetPerf
-    {
-        [BenchmarkCategory("String")]
+        
+        // Set 
+
+        [BenchmarkCategory("String", "Set")]
         [Benchmark(OperationsPerInvoke = 26)]
-        public void StringDict()
+        public void Set_StringDict()
         {
             _stringDict["A"] = "A";
             _stringDict["B"] = "B";
@@ -511,9 +506,9 @@ namespace Dict
             _stringDict["Z"] = "Z";
         }
         
-        [BenchmarkCategory("String")]
+        [BenchmarkCategory("String", "Set")]
         [Benchmark(OperationsPerInvoke = 26, Baseline = true)]
-        public void StringSet()
+        public void Set_StringSet()
         {
             _stringSet.Add("A");
             _stringSet.Add("B");
@@ -543,9 +538,9 @@ namespace Dict
             _stringSet.Add("Z");
         }
         
-        [BenchmarkCategory("String")]
+        [BenchmarkCategory("String", "Set")]
         [Benchmark(OperationsPerInvoke = 26)]
-        public void StringFastSet()
+        public void Set_StringFastSet()
         {
             _stringFastSet.Add("A");
             _stringFastSet.Add("B");
@@ -575,9 +570,9 @@ namespace Dict
             _stringFastSet.Add("Z");
         }
         
-        [BenchmarkCategory("Int32")]
+        [BenchmarkCategory("Int32", "Set")]
         [Benchmark(OperationsPerInvoke = 26)]
-        public void IntDict()
+        public void Set_IntDict()
         {
             _intDict[1] = 1;
             _intDict[2] = 2;
@@ -607,9 +602,9 @@ namespace Dict
             _intDict[26] = 26;
         }
 
-        [BenchmarkCategory("Int32")]
+        [BenchmarkCategory("Int32", "Set")]
         [Benchmark(OperationsPerInvoke = 26, Baseline = true)]
-        public void IntSet()
+        public void Set_IntSet()
         {
             _intSet.Add(1);
             _intSet.Add(2);
@@ -639,9 +634,9 @@ namespace Dict
             _intSet.Add(26);
         }
         
-        [BenchmarkCategory("Int32")]
+        [BenchmarkCategory("Int32", "Set")]
         [Benchmark(OperationsPerInvoke = 26)]
-        public void IntFastSet()
+        public void Set_IntFastSet()
         {
             _intFastSet.Add(1);
             _intFastSet.Add(2);
@@ -671,9 +666,9 @@ namespace Dict
             _intFastSet.Add(26);
         }
         
-        [BenchmarkCategory("Object")]
+        [BenchmarkCategory("Object", "Set")]
         [Benchmark(OperationsPerInvoke = 26)]
-        public void ObjDict()
+        public void Set_ObjDict()
         {
             _objDict[_key1] = _key1;
             _objDict[_key2] = _key2;
@@ -703,9 +698,9 @@ namespace Dict
             _objDict[_key26] = _key26;
         }
         
-        [BenchmarkCategory("Object")]
+        [BenchmarkCategory("Object", "Set")]
         [Benchmark(OperationsPerInvoke = 26, Baseline = true)]
-        public void ObjSet()
+        public void Set_ObjSet()
         {
             _objSet.Add(_key1);
             _objSet.Add(_key2);
@@ -735,9 +730,9 @@ namespace Dict
             _objSet.Add(_key26);
         }
         
-        [BenchmarkCategory("Object")]
+        [BenchmarkCategory("Object", "Set")]
         [Benchmark(OperationsPerInvoke = 26)]
-        public void ObjFastSet()
+        public void Set_ObjFastSet()
         {
             _objFastSet.Add(_key1);
             _objFastSet.Add(_key2);
@@ -767,9 +762,9 @@ namespace Dict
             _objFastSet.Add(_key26);
         }
         
-        [BenchmarkCategory("Custom")]
+        [BenchmarkCategory("Custom", "Set")]
         [Benchmark(OperationsPerInvoke = 26)]
-        public void CustomDict()
+        public void Set_CustomDict()
         {
             _customDict[_key1] = _key1;
             _customDict[_key2] = _key2;
@@ -799,9 +794,9 @@ namespace Dict
             _customDict[_key26] = _key26;
         }
         
-        [BenchmarkCategory("Custom")]
+        [BenchmarkCategory("Custom", "Set")]
         [Benchmark(OperationsPerInvoke = 26, Baseline = true)]
-        public void CustomSet()
+        public void Set_CustomSet()
         {
             _customSet.Add(_key1);
             _customSet.Add(_key2);
@@ -831,9 +826,9 @@ namespace Dict
             _customSet.Add(_key26);
         }
         
-        [BenchmarkCategory("Custom")]
+        [BenchmarkCategory("Custom", "Set")]
         [Benchmark(OperationsPerInvoke = 26)]
-        public void CustomFastSet()
+        public void Set_CustomFastSet()
         {
             _customFastSet.Add(_key1);
             _customFastSet.Add(_key2);
