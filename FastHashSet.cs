@@ -74,7 +74,7 @@ namespace System.Collections.Generic
         private int _count;
         private int _lastIndex;
         private int _freeList;
-        private IEqualityComparer<T> _comparer = default!;
+        private IEqualityComparer<T>? _comparer = default!;
         private int _version;
 
         private SerializationInfo? _siInfo; // temporary variable needed during deserialization
@@ -82,14 +82,14 @@ namespace System.Collections.Generic
         #region Constructors
 
         public FastHashSet()
-            : this(EqualityComparer<T>.Default)
+            : this((IEqualityComparer<T>?)null)
         { }
 
         public FastHashSet(IEqualityComparer<T>? comparer)
         {
-            if (comparer == null)
+            if (comparer == EqualityComparer<T>.Default)
             {
-                comparer = EqualityComparer<T>.Default;
+                comparer = null;
             }
 
             _comparer = comparer;
@@ -100,11 +100,11 @@ namespace System.Collections.Generic
         }
 
         public FastHashSet(int capacity)
-            : this(capacity, EqualityComparer<T>.Default)
+            : this(capacity, null)
         { }
 
         public FastHashSet(IEnumerable<T> collection)
-            : this(collection, EqualityComparer<T>.Default)
+            : this(collection, null)
         { }
 
         /// <summary>
@@ -262,10 +262,9 @@ namespace System.Collections.Generic
                 int collisionCount = 0;
                 Slot[] slots = _slots;
             
-                IEqualityComparer<T> comparer = _comparer;
-                EqualityComparer<T> defaultComparer = EqualityComparer<T>.Default;
+                IEqualityComparer<T>? comparer = _comparer;
                 
-                if (comparer == defaultComparer)
+                if (comparer == null)
                 {
                     int hashCode = item == null ? 0 : InternalGetHashCode(item.GetHashCode());
                     
@@ -292,7 +291,7 @@ namespace System.Collections.Generic
                         // Object type: Shared Generic, EqualityComparer<TValue>.Default won't devirtualize
                         // https://github.com/dotnet/coreclr/issues/17273
                         // So cache in a local rather than get EqualityComparer per loop iteration
-                        // EqualityComparer<TKey> defaultComparer = EqualityComparer<TKey>.Default;
+                        EqualityComparer<T> defaultComparer = EqualityComparer<T>.Default;
                         
                         // see note at "HashSet" level describing why "- 1" appears in for loop
                         for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
@@ -314,6 +313,7 @@ namespace System.Collections.Generic
                 else
                 {
                     int hashCode = item == null ? 0 : InternalGetHashCode(comparer.GetHashCode(item));
+                    
                     // see note at "HashSet" level describing why "- 1" appears in for loop
                     for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
                     {
@@ -355,14 +355,15 @@ namespace System.Collections.Generic
         {
             if (_buckets != null)
             {
-                int hashCode = InternalGetHashCode(item);
+                IEqualityComparer<T> comparer = _comparer ?? EqualityComparer<T>.Default;
+                int hashCode = InternalGetHashCode(item, comparer);
                 int bucket = hashCode % _buckets.Length;
                 int last = -1;
                 int collisionCount = 0;
                 Slot[] slots = _slots;
                 for (int i = _buckets[bucket] - 1; i >= 0; last = i, i = slots[i].next)
                 {
-                    if (slots[i].hashCode == hashCode && _comparer.Equals(slots[i].value, item))
+                    if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, item))
                     {
                         if (last < 0)
                         {
@@ -454,7 +455,7 @@ namespace System.Collections.Generic
             }
 
             info.AddValue(VersionName, _version); // need to serialize version to avoid problems with serializing while enumerating
-            info.AddValue(ComparerName, _comparer, typeof(IEqualityComparer<T>));
+            info.AddValue(ComparerName, _comparer ?? EqualityComparer<T>.Default, typeof(IEqualityComparer<T>));
             info.AddValue(CapacityName, _buckets == null ? 0 : _buckets.Length);
 
             if (_buckets != null)
@@ -482,6 +483,11 @@ namespace System.Collections.Generic
             int capacity = _siInfo.GetInt32(CapacityName);
             _comparer = (IEqualityComparer<T>)_siInfo.GetValue(ComparerName, typeof(IEqualityComparer<T>))!;
             _freeList = -1;
+            
+            if (_comparer == EqualityComparer<T>.Default)
+            {
+                _comparer = null;
+            }
 
             if (capacity != 0)
             {
@@ -1098,7 +1104,7 @@ namespace System.Collections.Generic
         {
             get
             {
-                return _comparer;
+                return _comparer ?? EqualityComparer<T>.Default;
             }
         }
 
@@ -1274,10 +1280,9 @@ namespace System.Collections.Generic
             int collisionCount = 0;
             Slot[] slots = _slots;
             
-            IEqualityComparer<T> comparer = _comparer;
-            EqualityComparer<T> defaultComparer = EqualityComparer<T>.Default;
+            IEqualityComparer<T>? comparer = _comparer;
             
-            if (comparer == defaultComparer)
+            if (comparer == null)
             {
                 hashCode = value == null ? 0 : InternalGetHashCode(value.GetHashCode());
                 bucket = hashCode % _buckets!.Length;
@@ -1304,7 +1309,7 @@ namespace System.Collections.Generic
                     // Object type: Shared Generic, EqualityComparer<TValue>.Default won't devirtualize
                     // https://github.com/dotnet/coreclr/issues/17273
                     // So cache in a local rather than get EqualityComparer per loop iteration
-                    // EqualityComparer<TKey> defaultComparer = EqualityComparer<TKey>.Default;
+                    EqualityComparer<T> defaultComparer = EqualityComparer<T>.Default;
                     
                     for (int i = _buckets[bucket] - 1; i >= 0; i = slots[i].next)
                     {
@@ -1378,10 +1383,11 @@ namespace System.Collections.Generic
             int bucket = hashCode % _buckets!.Length;
 
 #if DEBUG
-            Debug.Assert(InternalGetHashCode(value) == hashCode);
+            IEqualityComparer<T> comparer = _comparer ?? EqualityComparer<T>.Default;
+            Debug.Assert(InternalGetHashCode(value, comparer) == hashCode);
             for (int i = _buckets[bucket] - 1; i >= 0; i = _slots[i].next)
             {
-                Debug.Assert(!_comparer.Equals(_slots[i].value, value));
+                Debug.Assert(!comparer.Equals(_slots[i].value, value));
             }
 #endif
 
@@ -1509,11 +1515,12 @@ namespace System.Collections.Generic
             Debug.Assert(_buckets != null, "_buckets was null; callers should check first");
 
             int collisionCount = 0;
-            int hashCode = InternalGetHashCode(item);
+            IEqualityComparer<T> comparer = _comparer ?? EqualityComparer<T>.Default;
+            int hashCode = InternalGetHashCode(item, comparer);
             Slot[] slots = _slots;
             for (int i = _buckets[hashCode % _buckets.Length] - 1; i >= 0; i = slots[i].next)
             {
-                if ((slots[i].hashCode) == hashCode && _comparer.Equals(slots[i].value, item))
+                if ((slots[i].hashCode) == hashCode && comparer.Equals(slots[i].value, item))
                 {
                     return i;
                 }
@@ -1630,13 +1637,14 @@ namespace System.Collections.Generic
         {
             Debug.Assert(_buckets != null, "_buckets is null, callers should have checked");
 
-            int hashCode = InternalGetHashCode(value);
+            IEqualityComparer<T> comparer = _comparer ?? EqualityComparer<T>.Default;
+            int hashCode = InternalGetHashCode(value, comparer);
             int bucket = hashCode % _buckets.Length;
             int collisionCount = 0;
             Slot[] slots = _slots;
             for (int i = _buckets[bucket] - 1; i >= 0; i = slots[i].next)
             {
-                if (slots[i].hashCode == hashCode && _comparer.Equals(slots[i].value, value))
+                if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, value))
                 {
                     location = i;
                     return false; //already present
@@ -1843,14 +1851,15 @@ namespace System.Collections.Generic
         /// Workaround Comparers that throw ArgumentNullException for GetHashCode(null).
         /// </summary>
         /// <param name="item"></param>
+        /// <param name="comparer"></param>
         /// <returns>hash code</returns>
-        private int InternalGetHashCode(T item)
+        private static int InternalGetHashCode(T item, IEqualityComparer<T> comparer)
         {
             if (item == null)
             {
                 return 0;
             }
-            return _comparer.GetHashCode(item) & Lower31BitMask;
+            return comparer.GetHashCode(item) & Lower31BitMask;
         }
         
         private int InternalGetHashCode(int hashCode)
