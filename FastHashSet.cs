@@ -1268,24 +1268,79 @@ namespace System.Collections.Generic
             {
                 Initialize(0);
             }
-
-            int hashCode = InternalGetHashCode(value);
-            int bucket = hashCode % _buckets!.Length;
+            
+            int hashCode;
+            int bucket;
             int collisionCount = 0;
             Slot[] slots = _slots;
-            for (int i = _buckets[bucket] - 1; i >= 0; i = slots[i].next)
+            
+            IEqualityComparer<T> comparer = _comparer;
+            EqualityComparer<T> defaultComparer = EqualityComparer<T>.Default;
+            
+            if (comparer == defaultComparer)
             {
-                if (slots[i].hashCode == hashCode && _comparer.Equals(slots[i].value, value))
+                hashCode = value == null ? 0 : InternalGetHashCode(value.GetHashCode());
+                bucket = hashCode % _buckets!.Length;
+                    
+                if (default(T)! != null) // TODO-NULLABLE: default(T) == null warning (https://github.com/dotnet/roslyn/issues/34757)
                 {
-                    return false;
-                }
+                    for (int i = _buckets[bucket] - 1; i >= 0; i = slots[i].next)
+                    {
+                        if (slots[i].hashCode == hashCode && EqualityComparer<T>.Default.Equals(slots[i].value, value))
+                        {
+                            return false;
+                        }
 
-                if (collisionCount >= slots.Length)
-                {
-                    // The chain of entries forms a loop, which means a concurrent update has happened.
-                    throw new InvalidOperationException(SR.InvalidOperation_ConcurrentOperationsNotSupported);
+                        if (collisionCount >= slots.Length)
+                        {
+                            // The chain of entries forms a loop, which means a concurrent update has happened.
+                            throw new InvalidOperationException(SR.InvalidOperation_ConcurrentOperationsNotSupported);
+                        }
+                        collisionCount++;
+                    }
                 }
-                collisionCount++;
+                else
+                {
+                    // Object type: Shared Generic, EqualityComparer<TValue>.Default won't devirtualize
+                    // https://github.com/dotnet/coreclr/issues/17273
+                    // So cache in a local rather than get EqualityComparer per loop iteration
+                    // EqualityComparer<TKey> defaultComparer = EqualityComparer<TKey>.Default;
+                    
+                    for (int i = _buckets[bucket] - 1; i >= 0; i = slots[i].next)
+                    {
+                        if (slots[i].hashCode == hashCode && defaultComparer.Equals(slots[i].value, value))
+                        {
+                            return false;
+                        }
+
+                        if (collisionCount >= slots.Length)
+                        {
+                            // The chain of entries forms a loop, which means a concurrent update has happened.
+                            throw new InvalidOperationException(SR.InvalidOperation_ConcurrentOperationsNotSupported);
+                        }
+                        collisionCount++;
+                    }
+                }
+            }
+            else
+            {
+                hashCode = value == null ? 0 : InternalGetHashCode(comparer.GetHashCode(value));
+                bucket = hashCode % _buckets!.Length;
+                
+                for (int i = _buckets[bucket] - 1; i >= 0; i = slots[i].next)
+                {
+                    if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, value))
+                    {
+                        return false;
+                    }
+
+                    if (collisionCount >= slots.Length)
+                    {
+                        // The chain of entries forms a loop, which means a concurrent update has happened.
+                        throw new InvalidOperationException(SR.InvalidOperation_ConcurrentOperationsNotSupported);
+                    }
+                    collisionCount++;
+                }
             }
 
             int index;
