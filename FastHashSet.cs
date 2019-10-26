@@ -74,7 +74,7 @@ namespace System.Collections.Generic
         private int _count;
         private int _lastIndex;
         private int _freeList;
-        private IEqualityComparer<T>? _comparer = default!;
+        private IEqualityComparer<T>? _comparer;
         private int _version;
 
         private SerializationInfo? _siInfo; // temporary variable needed during deserialization
@@ -261,16 +261,15 @@ namespace System.Collections.Generic
             {
                 int collisionCount = 0;
                 Slot[] slots = _slots;
-            
                 IEqualityComparer<T>? comparer = _comparer;
-                
+
                 if (comparer == null)
                 {
                     int hashCode = item == null ? 0 : InternalGetHashCode(item.GetHashCode());
-                    
+
                     if (default(T)! != null) // TODO-NULLABLE: default(T) == null warning (https://github.com/dotnet/roslyn/issues/34757)
                     {
-                        // see note at "HashSet" level describing why "- 1" appears in for loop
+                        // see note at "FastHashSet" level describing why "- 1" appears in for loop
                         for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
                         {
                             if (slots[i].hashCode == hashCode && EqualityComparer<T>.Default.Equals(slots[i].value, item))
@@ -292,8 +291,8 @@ namespace System.Collections.Generic
                         // https://github.com/dotnet/coreclr/issues/17273
                         // So cache in a local rather than get EqualityComparer per loop iteration
                         EqualityComparer<T> defaultComparer = EqualityComparer<T>.Default;
-                        
-                        // see note at "HashSet" level describing why "- 1" appears in for loop
+
+                        // see note at "FastHashSet" level describing why "- 1" appears in for loop
                         for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
                         {
                             if (slots[i].hashCode == hashCode && defaultComparer.Equals(slots[i].value, item))
@@ -313,8 +312,8 @@ namespace System.Collections.Generic
                 else
                 {
                     int hashCode = item == null ? 0 : InternalGetHashCode(comparer.GetHashCode(item));
-                    
-                    // see note at "HashSet" level describing why "- 1" appears in for loop
+
+                    // see note at "FastHashSet" level describing why "- 1" appears in for loop
                     for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
                     {
                         if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, item))
@@ -331,7 +330,7 @@ namespace System.Collections.Generic
                     }
                 }
             }
-            
+
             // either _buckets is null or wasn't found
             return false;
         }
@@ -353,59 +352,117 @@ namespace System.Collections.Generic
         /// <returns>true if removed; false if not (i.e. if the item wasn't in the FastHashSet)</returns>
         public bool Remove(T item)
         {
+            int hashCode;
+            int bucket;
+            int last = -1;
+            int collisionCount = 0;
+            int i;
+            Slot[] slots;
+            IEqualityComparer<T>? comparer = _comparer;
+
             if (_buckets != null)
             {
-                IEqualityComparer<T> comparer = _comparer ?? EqualityComparer<T>.Default;
-                int hashCode = InternalGetHashCode(item, comparer);
-                int bucket = hashCode % _buckets.Length;
-                int last = -1;
-                int collisionCount = 0;
-                Slot[] slots = _slots;
-                for (int i = _buckets[bucket] - 1; i >= 0; last = i, i = slots[i].next)
+                slots = _slots;
+
+                if (comparer == null)
                 {
-                    if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, item))
-                    {
-                        if (last < 0)
-                        {
-                            // first iteration; update buckets
-                            _buckets[bucket] = slots[i].next + 1;
-                        }
-                        else
-                        {
-                            // subsequent iterations; update 'next' pointers
-                            slots[last].next = slots[i].next;
-                        }
-                        slots[i].hashCode = -1;
-                        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-                        {
-                            slots[i].value = default!;
-                        }
-                        slots[i].next = _freeList;
+                    hashCode = item == null ? 0 : InternalGetHashCode(item.GetHashCode());
+                    bucket = hashCode % _buckets!.Length;
 
-                        _count--;
-                        _version++;
-                        if (_count == 0)
-                        {
-                            _lastIndex = 0;
-                            _freeList = -1;
-                        }
-                        else
-                        {
-                            _freeList = i;
-                        }
-                        return true;
-                    }
-
-                    if (collisionCount >= slots.Length)
+                    if (default(T)! != null) // TODO-NULLABLE: default(T) == null warning (https://github.com/dotnet/roslyn/issues/34757)
                     {
-                        // The chain of entries forms a loop, which means a concurrent update has happened.
-                        throw new InvalidOperationException(SR.InvalidOperation_ConcurrentOperationsNotSupported);
+                        for (i = _buckets[bucket] - 1; i >= 0; last = i, i = slots[i].next)
+                        {
+                            if (slots[i].hashCode == hashCode && EqualityComparer<T>.Default.Equals(slots[i].value, item))
+                            {
+                                goto ReturnFound;
+                            }
+
+                            if (collisionCount >= slots.Length)
+                            {
+                                // The chain of entries forms a loop, which means a concurrent update has happened.
+                                throw new InvalidOperationException("SR.InvalidOperation_ConcurrentOperationsNotSupported");
+                            }
+                            collisionCount++;
+                        }
                     }
-                    collisionCount++;
+                    else
+                    {
+                        // Object type: Shared Generic, EqualityComparer<TValue>.Default won't devirtualize
+                        // https://github.com/dotnet/coreclr/issues/17273
+                        // So cache in a local rather than get EqualityComparer per loop iteration
+                        EqualityComparer<T> defaultComparer = EqualityComparer<T>.Default;
+
+                        for (i = _buckets[bucket] - 1; i >= 0; last = i, i = slots[i].next)
+                        {
+                            if (slots[i].hashCode == hashCode && defaultComparer.Equals(slots[i].value, item))
+                            {
+                                goto ReturnFound;
+                            }
+
+                            if (collisionCount >= slots.Length)
+                            {
+                                // The chain of entries forms a loop, which means a concurrent update has happened.
+                                throw new InvalidOperationException("SR.InvalidOperation_ConcurrentOperationsNotSupported");
+                            }
+                            collisionCount++;
+                        }
+                    }
+                }
+                else
+                {
+                    hashCode = item == null ? 0 : InternalGetHashCode(comparer.GetHashCode(item));
+                    bucket = hashCode % _buckets!.Length;
+
+                    for (i = _buckets[bucket] - 1; i >= 0; last = i, i = slots[i].next)
+                    {
+                        if (slots[i].hashCode == hashCode && EqualityComparer<T>.Default.Equals(slots[i].value, item))
+                        {
+                            goto ReturnFound;
+                        }
+
+                        if (collisionCount >= slots.Length)
+                        {
+                            // The chain of entries forms a loop, which means a concurrent update has happened.
+                            throw new InvalidOperationException("SR.InvalidOperation_ConcurrentOperationsNotSupported");
+                        }
+                        collisionCount++;
+                    }
                 }
             }
             // either _buckets is null or wasn't found
             return false;
+
+        ReturnFound:
+            if (last < 0)
+            {
+                // first iteration; update buckets
+                _buckets[bucket] = slots[i].next + 1;
+            }
+            else
+            {
+                // subsequent iterations; update 'next' pointers
+                slots[last].next = slots[i].next;
+            }
+            slots[i].hashCode = -1;
+            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            {
+                slots[i].value = default!;
+            }
+            slots[i].next = _freeList;
+
+            _count--;
+            _version++;
+            if (_count == 0)
+            {
+                _lastIndex = 0;
+                _freeList = -1;
+            }
+            else
+            {
+                _freeList = i;
+            }
+            return true;
         }
 
         /// <summary>
@@ -483,11 +540,6 @@ namespace System.Collections.Generic
             int capacity = _siInfo.GetInt32(CapacityName);
             _comparer = (IEqualityComparer<T>)_siInfo.GetValue(ComparerName, typeof(IEqualityComparer<T>))!;
             _freeList = -1;
-            
-            if (_comparer == EqualityComparer<T>.Default)
-            {
-                _comparer = null;
-            }
 
             if (capacity != 0)
             {
@@ -1195,8 +1247,7 @@ namespace System.Collections.Generic
         /// <returns></returns>
         public static IEqualityComparer<FastHashSet<T>> CreateSetComparer()
         {
-            // return new HashSetEqualityComparer<T>();
-            return null;
+            return new HashSetEqualityComparer<T>();
         }
 
         /// <summary>
@@ -1274,19 +1325,19 @@ namespace System.Collections.Generic
             {
                 Initialize(0);
             }
-            
+
             int hashCode;
             int bucket;
             int collisionCount = 0;
             Slot[] slots = _slots;
-            
+
             IEqualityComparer<T>? comparer = _comparer;
-            
+
             if (comparer == null)
             {
                 hashCode = value == null ? 0 : InternalGetHashCode(value.GetHashCode());
                 bucket = hashCode % _buckets!.Length;
-                    
+
                 if (default(T)! != null) // TODO-NULLABLE: default(T) == null warning (https://github.com/dotnet/roslyn/issues/34757)
                 {
                     for (int i = _buckets[bucket] - 1; i >= 0; i = slots[i].next)
@@ -1310,7 +1361,7 @@ namespace System.Collections.Generic
                     // https://github.com/dotnet/coreclr/issues/17273
                     // So cache in a local rather than get EqualityComparer per loop iteration
                     EqualityComparer<T> defaultComparer = EqualityComparer<T>.Default;
-                    
+
                     for (int i = _buckets[bucket] - 1; i >= 0; i = slots[i].next)
                     {
                         if (slots[i].hashCode == hashCode && defaultComparer.Equals(slots[i].value, value))
@@ -1331,7 +1382,7 @@ namespace System.Collections.Generic
             {
                 hashCode = value == null ? 0 : InternalGetHashCode(comparer.GetHashCode(value));
                 bucket = hashCode % _buckets!.Length;
-                
+
                 for (int i = _buckets[bucket] - 1; i >= 0; i = slots[i].next)
                 {
                     if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, value))
@@ -1383,11 +1434,11 @@ namespace System.Collections.Generic
             int bucket = hashCode % _buckets!.Length;
 
 #if DEBUG
-            IEqualityComparer<T> comparer = _comparer ?? EqualityComparer<T>.Default;
+            IEqualityComparer<T>? comparer = _comparer;
             Debug.Assert(InternalGetHashCode(value, comparer) == hashCode);
             for (int i = _buckets[bucket] - 1; i >= 0; i = _slots[i].next)
             {
-                Debug.Assert(!comparer.Equals(_slots[i].value, value));
+                Debug.Assert(!InternalEquals(_slots[i].value, value, comparer));
             }
 #endif
 
@@ -1514,23 +1565,76 @@ namespace System.Collections.Generic
         {
             Debug.Assert(_buckets != null, "_buckets was null; callers should check first");
 
+            int[]? buckets = _buckets;
             int collisionCount = 0;
-            IEqualityComparer<T> comparer = _comparer ?? EqualityComparer<T>.Default;
-            int hashCode = InternalGetHashCode(item, comparer);
             Slot[] slots = _slots;
-            for (int i = _buckets[hashCode % _buckets.Length] - 1; i >= 0; i = slots[i].next)
-            {
-                if ((slots[i].hashCode) == hashCode && comparer.Equals(slots[i].value, item))
-                {
-                    return i;
-                }
+            IEqualityComparer<T>? comparer = _comparer;
 
-                if (collisionCount >= slots.Length)
+            if (comparer == null)
+            {
+                int hashCode = item == null ? 0 : InternalGetHashCode(item.GetHashCode());
+
+                if (default(T)! != null) // TODO-NULLABLE: default(T) == null warning (https://github.com/dotnet/roslyn/issues/34757)
                 {
-                    // The chain of entries forms a loop, which means a concurrent update has happened.
-                    throw new InvalidOperationException(SR.InvalidOperation_ConcurrentOperationsNotSupported);
+                    // see note at "FastHashSet" level describing why "- 1" appears in for loop
+                    for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
+                    {
+                        if (slots[i].hashCode == hashCode && EqualityComparer<T>.Default.Equals(slots[i].value, item))
+                        {
+                            return i;
+                        }
+
+                        if (collisionCount >= slots.Length)
+                        {
+                            // The chain of entries forms a loop, which means a concurrent update has happened.
+                            throw new InvalidOperationException(SR.InvalidOperation_ConcurrentOperationsNotSupported);
+                        }
+                        collisionCount++;
+                    }
                 }
-                collisionCount++;
+                else
+                {
+                    // Object type: Shared Generic, EqualityComparer<TValue>.Default won't devirtualize
+                    // https://github.com/dotnet/coreclr/issues/17273
+                    // So cache in a local rather than get EqualityComparer per loop iteration
+                    EqualityComparer<T> defaultComparer = EqualityComparer<T>.Default;
+
+                    // see note at "FastHashSet" level describing why "- 1" appears in for loop
+                    for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
+                    {
+                        if (slots[i].hashCode == hashCode && defaultComparer.Equals(slots[i].value, item))
+                        {
+                            return i;
+                        }
+
+                        if (collisionCount >= slots.Length)
+                        {
+                            // The chain of entries forms a loop, which means a concurrent update has happened.
+                            throw new InvalidOperationException(SR.InvalidOperation_ConcurrentOperationsNotSupported);
+                        }
+                        collisionCount++;
+                    }
+                }
+            }
+            else
+            {
+                int hashCode = item == null ? 0 : InternalGetHashCode(comparer.GetHashCode(item));
+
+                // see note at "FastHashSet" level describing why "- 1" appears in for loop
+                for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
+                {
+                    if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, item))
+                    {
+                        return i;
+                    }
+
+                    if (collisionCount >= slots.Length)
+                    {
+                        // The chain of entries forms a loop, which means a concurrent update has happened.
+                        throw new InvalidOperationException(SR.InvalidOperation_ConcurrentOperationsNotSupported);
+                    }
+                    collisionCount++;
+                }
             }
             // wasn't found
             return -1;
@@ -1637,14 +1741,14 @@ namespace System.Collections.Generic
         {
             Debug.Assert(_buckets != null, "_buckets is null, callers should have checked");
 
-            IEqualityComparer<T> comparer = _comparer ?? EqualityComparer<T>.Default;
+            IEqualityComparer<T>? comparer = _comparer;
             int hashCode = InternalGetHashCode(value, comparer);
             int bucket = hashCode % _buckets.Length;
             int collisionCount = 0;
             Slot[] slots = _slots;
             for (int i = _buckets[bucket] - 1; i >= 0; i = slots[i].next)
             {
-                if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, value))
+                if (slots[i].hashCode == hashCode && InternalEquals(slots[i].value, value, comparer))
                 {
                     location = i;
                     return false; //already present
@@ -1853,18 +1957,28 @@ namespace System.Collections.Generic
         /// <param name="item"></param>
         /// <param name="comparer"></param>
         /// <returns>hash code</returns>
-        private static int InternalGetHashCode(T item, IEqualityComparer<T> comparer)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int InternalGetHashCode(T item, IEqualityComparer<T>? comparer)
         {
             if (item == null)
             {
                 return 0;
             }
-            return comparer.GetHashCode(item) & Lower31BitMask;
+
+            int hashCode = comparer?.GetHashCode(item) ?? item.GetHashCode();
+            return hashCode & Lower31BitMask;
         }
-        
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int InternalGetHashCode(int hashCode)
         {
             return hashCode & Lower31BitMask;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool InternalEquals(T x, T y, IEqualityComparer<T>? comparer)
+        {
+            return comparer?.Equals(x, y) ?? EqualityComparer<T>.Default.Equals(x, y);
         }
 
         #endregion

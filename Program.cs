@@ -5,7 +5,7 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using BenchmarkDotNet.Running;
 
-namespace Dict
+namespace HashSetPerf
 {
     public class Program
     {
